@@ -1,30 +1,29 @@
-const { Client } = require('pg');
-require('dotenv').config();
+import { MongoClient } from 'mongodb';
 
-class DBClient {
+const HOST = process.env.DB_HOST || 'localhost';
+const PORT = process.env.DB_PORT || 27017;
+const DATABASE = process.env.DB_DATABASE || 'files_manager';
+const url = `mongodb://${HOST}:${PORT}`;
+
+class DBConection {
   constructor() {
-    this.client = new Client({
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      host: process.env.DB_HOST,
-      database: process.env.DB_DATABASE,
-      port: process.env.DB_PORT,
-    });
-    this.client.connect();
+    this.client = new MongoClient(url, { useUnifiedTopology: true, useNewUrlParser: true });
+    this.client.connect().then(() => {
+        this.db = this.client.db(`${DATABASE}`);
+  }).catch((err) => console.log(err));
+  }
 
-}
-    isAlive() {
-        return this.client._ending === false;
-    }
-    async nbUsers() {
-        const res = await this.client.query('SELECT COUNT(*) FROM users');
-        return res.rows[0].count;
-    }
-    async nbFiles() {
-        const res = await this.client.query('SELECT COUNT(*) FROM files');
-        return res.rows[0].count;
-    }
+  isAlive() {
+    return this.client.isConnected();
+  }
+
+  async nbUsers() {
+    const users = this.db.collection('users');
+    const usersNumber = await users.countDocuments();
+    return usersNumber;
+  }
 }
 
-const dbClient = new DBClient();
+
+const dbClient = new DBConection();
 export default dbClient;
