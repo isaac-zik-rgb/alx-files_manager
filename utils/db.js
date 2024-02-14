@@ -1,3 +1,6 @@
+const { Client } = require('pg');
+require('dotenv').config();
+
 class DBClient {
   constructor() {
     this.client = new Client({
